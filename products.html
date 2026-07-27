@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Products</title>
   <script>(function(){try{if(localStorage.getItem('ssm_dark')==='1')document.documentElement.classList.add('dark');}catch(e){}})();</script>
+  <script src="icons.js"></script>
   <script src="firebase-init.js"></script>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#6d28d9">
@@ -40,8 +41,26 @@
     #menuBtn, .iconbtn{ background:none; border:none; font-size:23px; line-height:1; color:var(--ink);
       cursor:pointer; padding:6px 9px; border-radius:10px; }
     #menuBtn:active, .iconbtn:active{ background:var(--line); }
-    .top-bar h1{ margin:0; font-size:16px; font-weight:700; letter-spacing:-.01em; flex:1;
+    .top-bar h1{ margin:0; font-size:16px; font-weight:700; letter-spacing:-.01em; flex:none;
       white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+    .header-search{
+      flex:1 1 auto; min-width:0; display:flex; align-items:center;
+      background:var(--surface); border:1px solid var(--line-2); border-radius:999px;
+      padding:3px; transition:border-color .15s, box-shadow .15s;
+    }
+    .header-search:focus-within{ border-color:var(--brand); box-shadow:0 0 0 3px rgba(109,40,217,.13); }
+    #searchBox{ flex:1 1 auto; min-width:0; display:block; width:auto; margin:0; padding:8px 4px 8px 14px;
+      font-size:14px; color:var(--ink); background:transparent; border:none;
+      outline:none; -webkit-appearance:none; appearance:none; }
+    #searchBtn{ flex:none; width:34px; height:34px; margin-right:1px; padding:0; border:none; border-radius:50%;
+      background:transparent; color:var(--ink); cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      -webkit-tap-highlight-color:transparent; outline:none; -webkit-user-select:none; user-select:none; }
+    #searchBtn svg{ width:19px; height:19px; display:block; }
+    #searchBtn:active{ opacity:.55; }
+    #searchBtn:focus, #searchBtn:focus-visible{ outline:none; box-shadow:none; }
+    ::placeholder{ color:var(--ink-3); }
 
     .wrap{ max-width:600px; margin:0 auto; padding:14px; }
 
@@ -187,6 +206,12 @@
     <div class="top-bar">
       <button id="menuBtn" onclick="openMenu()">⋮</button>
       <h1>ပစ္စည်းများ</h1>
+      <div class="header-search">
+        <input id="searchBox" placeholder="Search Product" oninput="applyFilters()">
+        <button type="button" id="searchBtn" aria-label="Search" onclick="applyFilters(); document.getElementById('searchBox').focus();">
+          <span data-icon="search" data-icon-size="19"></span>
+        </button>
+      </div>
     </div>
 
     <div class="wrap">
@@ -456,6 +481,18 @@
       });
 
       document.getElementById("productList").innerHTML = html;
+      applyFilters();
+    }
+
+    // ── Search ────────────────────────────────────────────────────
+    function applyFilters() {
+      var box = document.getElementById("searchBox");
+      var kw = (box && box.value || "").toLowerCase();
+
+      document.querySelectorAll(".product-card").forEach(function (card) {
+        var passText = (card.textContent || "").toLowerCase().includes(kw);
+        card.style.display = passText ? "" : "none";
+      });
     }
 
     // ── Slide Menu ──
