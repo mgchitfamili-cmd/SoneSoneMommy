@@ -7,6 +7,7 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="receipt.js"></script>
+  <script src="icons.js"></script>
 
   <script src="firebase-init.js"></script>
   <link rel="manifest" href="manifest.json">
@@ -194,7 +195,8 @@
     button:active{ transform:translateY(1px); }
     button:disabled{ background:#c6b8e8; cursor:not-allowed; }
     .btn-block{ width:100%; }
-    .add-btn{ width:100%; margin-top:2px; }
+    .add-btn{ width:100%; margin-top:2px; display:flex; align-items:center; justify-content:center; gap:6px; }
+    .add-btn .ssm-icon, .btn-new .ssm-icon{ flex:none; }
 
     /* gift checkbox + remark inline row */
     .gift-row{ display:flex; align-items:center; gap:10px; margin:0 0 10px 0; }
@@ -351,7 +353,7 @@
     .save-actions{ display:flex; flex-direction:column; gap:9px; }
     .btn-print{ background:var(--brand); width:100%; }
     .btn-share{ background:var(--green); width:100%; }
-    .btn-new{ background:#fff; color:var(--red); border:1px solid var(--red-line); width:100%; }
+    .btn-new{ background:#fff; color:var(--red); border:1px solid var(--red-line); width:100%; display:flex; align-items:center; justify-content:center; gap:6px; }
 
     /* ── Sticky checkout bar ── */
     .checkout-bar{
@@ -696,9 +698,9 @@
           <div class="row">
             <div>
               <div class="qty-stepper">
-                <button type="button" class="qty-btn qty-btn-minus" onclick="stepQty(-1)" aria-label="Decrease quantity">−</button>
+                <button type="button" class="qty-btn qty-btn-minus" onclick="stepQty(-1)" aria-label="Decrease quantity"><span data-icon="minus" data-icon-size="16"></span></button>
                 <input id="qty" class="qty-input" placeholder="0" inputmode="decimal" autocomplete="off" oninput="calculateItemTotal()">
-                <button type="button" class="qty-btn qty-btn-plus" onclick="stepQty(1)" aria-label="Increase quantity">+</button>
+                <button type="button" class="qty-btn qty-btn-plus" onclick="stepQty(1)" aria-label="Increase quantity"><span data-icon="add" data-icon-size="16"></span></button>
               </div>
             </div>
             <div>
@@ -711,7 +713,7 @@
           <input id="remark" placeholder="Remark">
         </div>
 
-        <button class="add-btn" onclick="addItem()">＋ Add Item</button>
+        <button class="add-btn" onclick="addItem()"><span data-icon="add" data-icon-size="16"></span> Add Item</button>
       </section>
 
       <!-- Discount & payment -->
@@ -753,7 +755,7 @@
       <div class="save-actions">
         <button class="btn-print" onclick="printReceipt()">🖨️ Print</button>
         <button class="btn-share" onclick="shareReceipt()">📤 Share</button>
-        <button class="btn-new" onclick="newReceipt()">➕ New Receipt</button>
+        <button class="btn-new" onclick="newReceipt()"><span data-icon="add" data-icon-size="16"></span> New Receipt</button>
       </div>
     </div>
 
@@ -1173,7 +1175,7 @@
             <div class="item-sub"><span>${_sub}</span><span>${total}</span></div>
             ${remark ? `<div class="item-remark">→ ${remark}</div>` : ""}
           </div>
-          <span class="rcart-act no-print"><button class="cart-edit" onclick="editRow(this)" aria-label="Edit">✏️</button><button class="cart-del" onclick="deleteRow(this)" aria-label="Delete">🗑️</button></span>
+          <span class="rcart-act no-print"><button class="cart-edit" onclick="editRow(this)" aria-label="Edit">${ssmIcon("edit",{size:15})}</button><button class="cart-del" onclick="deleteRow(this)" aria-label="Delete">${ssmIcon("trash",{size:15})}</button></span>
         </div>`;
       updateCartCount();
 
@@ -1548,7 +1550,7 @@
               <div class="item-sub"><span>${_sub2}</span><span>${item.total}</span></div>
               ${item.remark ? `<div class="item-remark">→ ${item.remark}</div>` : ""}
             </div>
-            <span class="rcart-act no-print"><button class="cart-edit" onclick="editRow(this)" aria-label="Edit">✏️</button><button class="cart-del" onclick="deleteRow(this)" aria-label="Delete">🗑️</button></span>
+            <span class="rcart-act no-print"><button class="cart-edit" onclick="editRow(this)" aria-label="Edit">${ssmIcon("edit",{size:15})}</button><button class="cart-del" onclick="deleteRow(this)" aria-label="Delete">${ssmIcon("trash",{size:15})}</button></span>
           </div>`;
       });
 

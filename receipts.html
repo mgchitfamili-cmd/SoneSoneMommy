@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="receipt.js"></script>
+  <script src="icons.js"></script>
 
   <script>(function(){try{if(localStorage.getItem('ssm_dark')==='1')document.documentElement.classList.add('dark');}catch(e){}})();</script>
   <script src="firebase-init.js"></script>
@@ -150,8 +151,9 @@
     .actions{ display:flex; gap:7px; margin-top:13px; flex-wrap:wrap; }
     .btn{ border:none; padding:10px 12px; border-radius:10px; color:#fff; font-size:13px;
       font-weight:600; cursor:pointer; flex:1; min-width:74px; font-family:inherit;
-      transition:transform .05s; }
+      transition:transform .05s; display:inline-flex; align-items:center; justify-content:center; gap:5px; }
     .btn:active{ transform:translateY(1px); }
+    .btn .ssm-icon{ flex:none; }
     .btn-payment{ background:var(--teal); }
     .btn-print{ background:var(--brand); }
     .btn-share{ background:var(--green); }
@@ -306,10 +308,7 @@
     <div class="header-search">
       <input id="searchBox" placeholder="Search Order No / Customer" oninput="applyFilters()">
       <button type="button" id="searchBtn" aria-label="Search" onclick="applyFilters(); document.getElementById('searchBox').focus();">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="10.5" cy="10.5" r="6.5"></circle>
-          <line x1="20" y1="20" x2="15.3" y2="15.3"></line>
-        </svg>
+        <span data-icon="search" data-icon-size="19"></span>
       </button>
     </div>
   </div>
@@ -513,10 +512,10 @@
               ${payInfo}
 
               <div class="actions">
-                <button class="btn btn-print"   onclick="printReceipt(${index})">🖨️ Print</button>
-                <button class="btn btn-share"   onclick="shareReceipt(${index})">📤 Share</button>
-                <button class="btn btn-edit"    onclick="editReceipt(${index})">✏️ Edit</button>
-                <button class="btn btn-delete"  onclick="deleteReceipt(${index})">🗑️ Delete</button>
+                <button class="btn btn-print"   onclick="printReceipt(${index})">${ssmIcon("print", {size:16})} Print</button>
+                <button class="btn btn-share"   onclick="shareReceipt(${index})">${ssmIcon("share", {size:16})} Share</button>
+                <button class="btn btn-edit"    onclick="editReceipt(${index})">${ssmIcon("edit", {size:16})} Edit</button>
+                <button class="btn btn-delete"  onclick="deleteReceipt(${index})">${ssmIcon("trash", {size:16})} Delete</button>
               </div>
             </div>
 
