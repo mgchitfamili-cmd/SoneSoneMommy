@@ -4,7 +4,6 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Products</title>
-  <script>(function(){try{if(localStorage.getItem('ssm_dark')==='1')document.documentElement.classList.add('dark');}catch(e){}})();</script>
   <script src="icons.js"></script>
   <script src="firebase-init.js"></script>
   <link rel="manifest" href="manifest.json">
@@ -165,24 +164,6 @@
     .menu-item.active .ic{ background:#fff; }
 
     @media (prefers-reduced-motion:reduce){ *{ transition:none !important; } }
-    /* ===== Dark mode (toggle via html.dark) ===== */
-    html.dark{
-      --bg:#0f1116; --surface:#181b22; --line:#252a33; --line-2:#333a46;
-      --ink:#e8eaef; --ink-2:#aab1bd; --ink-3:#727a87;
-      --brand:#8b5cf6; --brand-ink:#c4b5fd; --brand-tint:#1d1930; --brand-line:#352c57;
-      --green:#22c55e; --green-tint:#10271a; --green-line:#1f4a32;
-      --red:#f87171; --red-tint:#2a1414; --red-line:#5c2b2b;
-      --amber:#e0b84e; --amber-tint:#272010; --amber-line:#544619;
-      --blue:#93b4fb; --blue-tint:#172033; --blue-line:#2c3c5c;
-      --teal:#5fd0e6;
-      --shadow:0 1px 2px rgba(0,0,0,.4), 0 6px 18px rgba(0,0,0,.35);
-    }
-    html.dark .top-bar{ background:rgba(18,20,26,.82); }
-    html.dark input:not([type=range]):not([type=checkbox]),
-    html.dark select, html.dark textarea,
-    html.dark .field input, html.dark .field select{ background-color:#1e222a; }
-    html.dark .btn-edit, html.dark .btn-delete{ background:#1e222a; }
-    html.dark input:focus, html.dark select:focus, html.dark textarea:focus{ box-shadow:0 0 0 3px rgba(139,92,246,.22); }
   </style>
 </head>
 
