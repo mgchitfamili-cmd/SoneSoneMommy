@@ -159,6 +159,11 @@
 
     .pay-ss-thumb{ width:42px; height:42px; object-fit:cover; border-radius:9px;
       border:1px solid var(--line); cursor:pointer; flex:none; }
+    .ss-view-btn{ font-size:12.5px; font-weight:600; padding:5px 12px; border-radius:999px;
+      background:var(--brand-tint); color:var(--brand-ink); border:1px solid var(--brand-line);
+      cursor:pointer; -webkit-tap-highlight-color:transparent; }
+    .ss-view-btn:active{ opacity:.65; }
+    .ss-view-btn:disabled{ opacity:.55; }
 
     /* Fullscreen image viewer */
     .img-overlay{ position:fixed; inset:0; z-index:10001; display:none; align-items:center;
@@ -347,6 +352,62 @@
     let methodFilter = "";
     let currentSSDataUrl = null;
 
+    // ── SS ပုံများကို local မှာ မသိမ်းပဲ Cloud (Firestore) ထဲမှာသာ သိမ်း ──
+    var SS_COLLECTION = "paymentScreenshots";
+    function genId() {
+      return "p_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 9);
+    }
+    function whenFbReady(cb) {
+      if (window.fb && window.fb.db) { cb(); return; }
+      var onReady = function () { document.removeEventListener("fb-error", onError); cb(); };
+      var onError = function () {
+        document.removeEventListener("fb-ready", onReady);
+        alert("Cloud ချိတ်ဆက်မှု မအောင်မြင်ပါ - Internet စစ်ကြည့်ပါ");
+      };
+      document.addEventListener("fb-ready", onReady, { once: true });
+      document.addEventListener("fb-error", onError, { once: true });
+    }
+    function uploadSSToCloud(id, dataUrl) {
+      whenFbReady(function () {
+        window.fb.db.collection(SS_COLLECTION).doc(id).set({
+          data: dataUrl,
+          updatedAt: Date.now()
+        }).catch(function (e) {
+          console.error("[ss upload]", e);
+          alert("SS ပုံကို Cloud ပေါ်ကို တင်၍မရပါ - Internet စစ်ကြည့်ပါ");
+        });
+      });
+    }
+    function deleteSSFromCloud(id) {
+      whenFbReady(function () {
+        window.fb.db.collection(SS_COLLECTION).doc(id).delete().catch(function (e) {
+          console.error("[ss delete]", e);
+        });
+      });
+    }
+    function fetchSSFromCloud(id, cb) {
+      whenFbReady(function () {
+        window.fb.db.collection(SS_COLLECTION).doc(id).get().then(function (doc) {
+          cb(doc.exists ? (doc.data().data || null) : null);
+        }).catch(function (e) {
+          console.error("[ss fetch]", e);
+          cb(null);
+        });
+      });
+    }
+    function viewCloudSS(id, btn) {
+      var original = btn ? btn.textContent : null;
+      if (btn) { btn.disabled = true; btn.textContent = "ခေါ်နေသည်..."; }
+      fetchSSFromCloud(id, function (dataUrl) {
+        if (btn) { btn.disabled = false; btn.textContent = original; }
+        if (dataUrl) {
+          viewImageSrc(dataUrl);
+        } else {
+          alert("SS ပုံ ရှာမတွေ့ပါ (သို့) Internet ချိတ်ဆက်မှု စစ်ကြည့်ပါ");
+        }
+      });
+    }
+
     function pad(n){ return String(n).padStart(2, "0"); }
     function fmtKs(n) {
       n = Number(n) || 0;
@@ -385,7 +446,14 @@
         document.getElementById("payMethod").value = p.method || "KBZPay";
         document.getElementById("paySender").value = p.sender || "";
         document.getElementById("payTransferId").value = p.transferId || "";
-        if (p.ss) { setSSPreview(p.ss); } else { clearSSImage(); }
+        if (p.hasSS && p.id) {
+          showSSLoading();
+          fetchSSFromCloud(p.id, function (dataUrl) {
+            if (dataUrl) { setSSPreview(dataUrl); } else { clearSSImage(); }
+          });
+        } else {
+          clearSSImage();
+        }
         document.getElementById("payNote").value = p.note || "";
       } else {
         editingIndex = null;
@@ -439,7 +507,18 @@
       currentSSDataUrl = null;
       let img = document.getElementById("ssPreviewImg");
       img.src = ""; img.style.display = "none";
-      document.getElementById("ssPickerEmpty").style.display = "flex";
+      let empty = document.getElementById("ssPickerEmpty");
+      empty.innerHTML = '<span>📷</span><span>ဓါတ်ပုံ ရွေးရန်</span>';
+      empty.style.display = "flex";
+      document.getElementById("ssRemoveBtn").style.display = "none";
+    }
+    function showSSLoading() {
+      currentSSDataUrl = null;
+      let img = document.getElementById("ssPreviewImg");
+      img.src = ""; img.style.display = "none";
+      let empty = document.getElementById("ssPickerEmpty");
+      empty.innerHTML = '<span>⏳</span><span>SS ကို Cloud ကနေ ဆွဲနေသည်...</span>';
+      empty.style.display = "flex";
       document.getElementById("ssRemoveBtn").style.display = "none";
     }
     function viewSSImage() {
@@ -457,14 +536,18 @@
       let amount = parseFloat(document.getElementById("payAmount").value);
       if (!amount || amount <= 0) { alert("ပမာဏ မှန်ကန်စွာ ထည့်ပါ"); return; }
 
+      let existing = editingIndex !== null ? paymentsList[editingIndex] : null;
+      let paymentId = (existing && existing.id) || genId();
+
       let payment = {
+        id: paymentId,
         amount: amount,
         method: document.getElementById("payMethod").value,
         sender: document.getElementById("paySender").value.trim(),
         transferId: document.getElementById("payTransferId").value.trim(),
-        ss: currentSSDataUrl || "",
+        hasSS: !!currentSSDataUrl,
         note: document.getElementById("payNote").value.trim(),
-        createdAt: (editingIndex !== null ? paymentsList[editingIndex].createdAt : Date.now()) || Date.now()
+        createdAt: (existing ? existing.createdAt : Date.now()) || Date.now()
       };
 
       if (editingIndex !== null) {
@@ -473,16 +556,29 @@
         paymentsList.push(payment);
       }
 
+      // localStorage ထဲမှာ ပုံ (base64) ကို လုံးဝ မသိမ်းဘဲ metadata ကိုသာ သိမ်း
       localStorage.setItem("paymentsList", JSON.stringify(paymentsList));
+
+      // SS ပုံရှိလျှင် Cloud (Firestore) ထဲကိုသာ တင်/ပြင်/ဖျက်
+      if (currentSSDataUrl) {
+        uploadSSToCloud(paymentId, currentSSDataUrl);
+      } else if (existing && existing.hasSS && !payment.hasSS) {
+        deleteSSFromCloud(paymentId);
+      }
+
       closeForm();
       loadPayments();
     }
 
     function deletePayment(index) {
       showConfirm("ဒီ ငွေလွှဲမှတ်တမ်းကို ဖျက်မှာလား?", function () {
+        let removed = paymentsList[index];
         paymentsList.splice(index, 1);
         localStorage.setItem("paymentsList", JSON.stringify(paymentsList));
         loadPayments();
+        if (removed && removed.hasSS && removed.id) {
+          deleteSSFromCloud(removed.id);
+        }
       });
     }
 
@@ -519,9 +615,8 @@
             </div>
             ${p.sender ? `<div class="pay-mid">လွှဲသူ - <b>${p.sender}</b></div>` : ""}
             ${p.transferId ? `<div class="pay-mid">ငွေလွှဲ ID - <b>${p.transferId}</b></div>` : ""}
-            ${p.ss && p.ss.indexOf("data:") === 0 ? `<div class="pay-mid" style="display:flex;align-items:center;gap:9px;">SS -
-              <img class="pay-ss-thumb" src="${p.ss}" alt="SS" onclick="viewImageSrc(this.src)"></div>`
-              : (p.ss ? `<div class="pay-mid">SS - <b>${p.ss}</b></div>` : "")}
+            ${p.hasSS ? `<div class="pay-mid" style="display:flex;align-items:center;gap:9px;">SS -
+              <button type="button" class="ss-view-btn" onclick="viewCloudSS('${p.id}', this)">🖼️ ကြည့်ရန်</button></div>` : ""}
             ${p.note ? `<div class="pay-note">${p.note}</div>` : ""}
             <div class="pay-actions">
               <button class="icon-btn btn-edit"   onclick="openForm(${index})" aria-label="Edit">✏️</button>
