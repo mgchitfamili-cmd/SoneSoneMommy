@@ -734,7 +734,41 @@
           <textarea id="note" placeholder="📝 Delivery မှတ်ချက် (receipt အောက်ခြေ)"></textarea>
         </div>
 
-        <button type="button" class="add-btn" onclick="window.open('payments.html', '_blank')"><span data-icon="add" data-icon-size="16"></span> ငွေ ထည့်ရန်</button>
+        <div class="order-info-toggle-row">
+          <button type="button" id="onlinePayToggleBtn" class="order-info-toggle-btn" style="display:inline-flex;" onclick="toggleOnlinePay()" aria-expanded="false">💳 Online Payment ထည့်ရန်</button>
+        </div>
+        <div class="order-info-collapse" id="onlinePayCollapse">
+          <div class="order-info-collapse-inner">
+            <div class="field-row">
+              <div class="field">
+                <label class="lbl">Payment Type</label>
+                <select id="payType">
+                  <option value="">ရွေးပါ</option>
+                  <option value="KBZ Pay">KBZ Pay</option>
+                  <option value="Wave Pay">Wave Pay</option>
+                  <option value="AYA Pay">AYA Pay</option>
+                  <option value="CB Pay">CB Pay</option>
+                  <option value="Bank Transfer">Bank Transfer</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div class="field">
+                <label class="lbl">ပေးငွေပမာဏ (Amount)</label>
+                <input id="payAmount" placeholder="Amount" inputmode="numeric">
+              </div>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label class="lbl">Transaction Code</label>
+                <input id="payCode" placeholder="Transaction / Ref Code">
+              </div>
+              <div class="field">
+                <label class="lbl">ပေးချေသည့်ရက်</label>
+                <input id="payDate" type="date">
+              </div>
+            </div>
+          </div>
+        </div>
 
         <h3 id="discountShow"></h3>
       </section>
@@ -901,6 +935,16 @@
         if (savedMode === "shop") setAppMode("shop");
       } catch (e) {}
     })();
+
+    // ── Online Payment: collapsible fields toggle ──────────────────
+    function toggleOnlinePay() {
+      var btn = document.getElementById("onlinePayToggleBtn");
+      var collapse = document.getElementById("onlinePayCollapse");
+      if (!btn || !collapse) return;
+      var expanded = collapse.classList.toggle("expanded");
+      btn.textContent = expanded ? "− Online Payment ပိတ်ရန်" : "💳 Online Payment ထည့်ရန်";
+      btn.setAttribute("aria-expanded", expanded ? "true" : "false");
+    }
 
     // ── Delivery Service: recipient toggle button ─────────────────
     function toggleRecipientBtn() {
@@ -1359,14 +1403,14 @@
         deliveryFeeReal: "",
         charge:          "",
         deliveryPhoto:   "",
-        deposit:         0,
+        deposit:         Number(document.getElementById("payAmount").value) || 0,
         depositBase:     0,
-        payStatus:       "Cash",
-        payType:         "",
-        payCode:         "",
+        payStatus:       (document.getElementById("payAmount").value ? "Online" : "Cash"),
+        payType:         document.getElementById("payType").value,
+        payCode:         document.getElementById("payCode").value,
         paySS:           "",
-        payAmount:       "",
-        payDate:         "",
+        payAmount:       document.getElementById("payAmount").value,
+        payDate:         document.getElementById("payDate").value,
         note:            document.getElementById("note").value,
         netTotal:        document.getElementById("netTotal").innerText,
         printed:         false,
@@ -1423,7 +1467,7 @@
       document.getElementById("rp-deliveryService").innerText = "Delivery : " + data.deliveryService;
       document.getElementById("rp-grandTotal").innerText      = "Total : " + data.grandTotal;
       document.getElementById("rp-delivery").innerText        = "Delivery Fee : " + data.delivery;
-      document.getElementById("rp-deposit").innerText         = "Deposit : " + data.deposit;
+      document.getElementById("rp-deposit").innerText         = "Deposit : " + data.deposit + (data.payType ? " (" + data.payType + ")" : "");
       document.getElementById("rp-netTotal").innerText        = data.netTotal;
 
       // Discount line
@@ -1535,6 +1579,15 @@
       document.getElementById("deliveryService").value = receipt.deliveryService || "";
       document.getElementById("note").value            = receipt.note            || "";
       document.getElementById("discountValue").value   = receipt.discountAmount  || receipt.discountValue || "";
+      document.getElementById("payType").value         = receipt.payType         || "";
+      document.getElementById("payAmount").value       = receipt.payAmount       || "";
+      document.getElementById("payCode").value         = receipt.payCode         || "";
+      document.getElementById("payDate").value         = receipt.payDate         || "";
+      if (receipt.payType || receipt.payAmount || receipt.payCode) {
+        var _pBtn = document.getElementById("onlinePayToggleBtn");
+        var _pCol = document.getElementById("onlinePayCollapse");
+        if (_pCol && !_pCol.classList.contains("expanded")) { _pCol.classList.add("expanded"); if (_pBtn) { _pBtn.textContent = "− Online Payment ပိတ်ရန်"; _pBtn.setAttribute("aria-expanded", "true"); } }
+      }
 
       receipt.items.forEach(function (item) {
         if (!item.id) item.id = Date.now() + Math.random();
