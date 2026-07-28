@@ -73,25 +73,6 @@
 
     .wrap{ max-width:600px; margin:0 auto; padding:14px; }
 
-    /* Summary */
-    .summary-row{ display:flex; gap:10px; margin-bottom:14px; }
-    .summary-card{ flex:1; min-width:0; background:var(--surface); border:1px solid var(--line);
-      border-radius:14px; padding:13px 14px; box-shadow:var(--shadow); }
-    .summary-card .lbl2{ font-size:11.5px; font-weight:700; letter-spacing:.03em; color:var(--ink-3);
-      margin:0 0 5px; text-transform:uppercase; }
-    .summary-card .val{ font-size:19px; font-weight:800; color:var(--green); white-space:nowrap;
-      overflow:hidden; text-overflow:ellipsis; }
-    .summary-card.all .val{ color:var(--brand-ink); }
-
-    /* Method filter chips */
-    .mfilter{ display:flex; gap:7px; overflow-x:auto; -webkit-overflow-scrolling:touch;
-      padding-bottom:2px; margin-bottom:14px; }
-    .mfilter::-webkit-scrollbar{ display:none; }
-    .mchip{ flex:none; border:1px solid var(--line-2); background:var(--surface); color:var(--ink-2);
-      border-radius:999px; padding:7px 13px; font-size:13px; font-weight:600; cursor:pointer;
-      white-space:nowrap; -webkit-tap-highlight-color:transparent; }
-    .mchip.active{ background:var(--brand); color:#fff; border-color:var(--brand); }
-
     /* Cards / form */
     .card{ background:var(--surface); border:1px solid var(--line); border-radius:var(--r);
       padding:16px; box-shadow:var(--shadow); }
@@ -121,13 +102,12 @@
     /* Transfer list */
     .pay-card{
       background:var(--surface); border:1px solid var(--line); border-radius:14px;
-      padding:13px 14px; margin-bottom:10px; box-shadow:var(--shadow);
+      padding:12px 14px; margin-bottom:9px; box-shadow:var(--shadow);
     }
     .pay-top{ display:flex; align-items:flex-start; gap:12px; }
     .pay-amt-wrap{ flex:1; min-width:0; }
-    .pay-amt{ font-size:18px; font-weight:800; color:var(--green); }
-    .pay-when{ font-size:12px; color:var(--ink-3); margin-top:2px; }
-    .tag{ flex:none; font-size:11.5px; font-weight:700; padding:5px 10px; border-radius:999px;
+    .pay-amt{ font-size:17px; font-weight:800; color:var(--green); }
+    .tag{ display:inline-block; margin-top:7px; font-size:11.5px; font-weight:700; padding:5px 10px; border-radius:999px;
       border:1px solid transparent; white-space:nowrap; }
     .tag-kbz{ background:var(--brand-tint); color:var(--brand-ink); border-color:var(--brand-line); }
     .tag-wave{ background:var(--green-tint); color:var(--green); border-color:var(--green-line); }
@@ -135,11 +115,14 @@
     .tag-cb{ background:var(--teal-tint); color:var(--teal); border-color:var(--teal-line); }
     .tag-bank{ background:var(--blue-tint); color:var(--blue); border-color:var(--blue-line); }
     .tag-other{ background:#f4f5f7; color:var(--ink-2); border-color:var(--line-2); }
-    .pay-mid{ font-size:13.5px; color:var(--ink-2); margin-top:9px; }
+    .pay-info-right{ flex:none; max-width:52%; text-align:right; }
+    .pay-mid{ font-size:13.5px; color:var(--ink-2); margin-top:6px; }
+    .pay-info-right .pay-mid{ margin-top:0; margin-bottom:6px; }
+    .pay-info-right .pay-mid:last-child{ margin-bottom:0; }
     .pay-mid b{ color:var(--ink); font-weight:600; }
     .pay-note{ font-size:13px; color:var(--ink-3); margin-top:5px; }
-    .pay-actions{ display:flex; gap:8px; margin-top:11px; }
-    .icon-btn{ width:36px; height:36px; padding:0; border-radius:10px; font-size:14px; line-height:1;
+    .pay-actions{ display:flex; gap:6px; margin-top:9px; }
+    .icon-btn{ width:29px; height:29px; padding:0; border-radius:8px; font-size:12px; line-height:1;
       display:flex; align-items:center; justify-content:center; }
     .btn-edit{ background:#fff; color:var(--brand-ink); border:1px solid var(--brand-line); }
     .btn-delete{ background:#fff; color:var(--red); border:1px solid var(--red-line); }
@@ -221,6 +204,36 @@
     .menu-item.active .ic{ background:#fff; }
 
     @media (prefers-reduced-motion:reduce){ *{ transition:none !important; } }
+
+    /* ── Select mode (embedded as a modal picker from index.html) ── */
+    .pay-check{
+      width:22px; height:22px; border-radius:50%; border:2px solid var(--line-2);
+      background:#fff; flex:none; margin-top:1px;
+      display:flex; align-items:center; justify-content:center;
+      transition:background .15s, border-color .15s;
+    }
+    .pay-check.checked{ background:var(--brand); border-color:var(--brand); }
+    .pay-check.checked::after{ content:"✓"; color:#fff; font-size:13px; font-weight:800; }
+    .pay-card.selectable{ cursor:pointer; -webkit-tap-highlight-color:transparent; }
+    .pay-card.selected{ border-color:var(--brand); box-shadow:0 0 0 2px rgba(109,40,217,.16); }
+    .pay-card.locked{ opacity:.55; }
+    .lock-tag{ color:var(--red) !important; font-weight:600; }
+
+    .select-bar{
+      position:fixed; left:0; right:0; bottom:0; z-index:150;
+      display:none; align-items:center; justify-content:space-between; gap:12px;
+      padding:12px 16px; padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));
+      background:rgba(255,255,255,.94);
+      backdrop-filter:saturate(150%) blur(10px); -webkit-backdrop-filter:saturate(150%) blur(10px);
+      border-top:1px solid var(--line); box-shadow:0 -6px 20px rgba(16,24,40,.08);
+      max-width:600px; margin:0 auto;
+    }
+    .select-bar-info{ display:flex; flex-direction:column; gap:2px; }
+    .select-bar-info #selectCount{ font-size:12px; color:var(--ink-3); font-weight:600; }
+    .select-bar-info #selectTotal{ font-size:17px; font-weight:800; color:var(--brand-ink); }
+    #selectDoneBtn{ flex:none; padding:12px 20px; }
+    body.select-mode{ padding-bottom:112px; }
+    body.select-mode #fabBtn{ bottom:calc(90px + env(safe-area-inset-bottom,0px)); }
   </style>
 </head>
 
@@ -258,31 +271,19 @@
     </div>
 
     <div class="wrap">
-      <div class="summary-row">
-        <div class="summary-card">
-          <div class="lbl2">ယနေ့ဝင်ငွေ</div>
-          <div class="val" id="todayTotal">0 Ks</div>
-        </div>
-        <div class="summary-card all">
-          <div class="lbl2">စုစုပေါင်း</div>
-          <div class="val" id="allTotal">0 Ks</div>
-        </div>
-      </div>
-
-      <div class="mfilter" id="methodFilter">
-        <button type="button" class="mchip active" data-m="" onclick="setMethodFilter('')">အားလုံး</button>
-        <button type="button" class="mchip" data-m="KBZPay" onclick="setMethodFilter('KBZPay')">KBZPay</button>
-        <button type="button" class="mchip" data-m="WavePay" onclick="setMethodFilter('WavePay')">WavePay</button>
-        <button type="button" class="mchip" data-m="AYA Pay" onclick="setMethodFilter('AYA Pay')">AYA Pay</button>
-        <button type="button" class="mchip" data-m="CB Pay" onclick="setMethodFilter('CB Pay')">CB Pay</button>
-        <button type="button" class="mchip" data-m="Bank" onclick="setMethodFilter('Bank')">ဘဏ်</button>
-        <button type="button" class="mchip" data-m="Other" onclick="setMethodFilter('Other')">အခြား</button>
-      </div>
-
       <div id="paymentsListEl"></div>
     </div>
 
     <button id="fabBtn" onclick="openForm()" aria-label="Add">＋</button>
+
+    <!-- Select mode: sticky confirm bar (shown only when embedded as a picker) -->
+    <div class="select-bar" id="selectBar">
+      <div class="select-bar-info">
+        <span id="selectCount">0 ခု ရွေးထားသည်</span>
+        <span id="selectTotal">0 Ks</span>
+      </div>
+      <button type="button" id="selectDoneBtn" onclick="finishSelection()">✅ ရွေးပြီး</button>
+    </div>
   </div>
 
   <!-- Fullscreen image viewer -->
@@ -351,6 +352,33 @@
     let editingIndex = null;
     let methodFilter = "";
     let currentSSDataUrl = null;
+
+    // ── Select mode: embedded as a picker modal from index.html ──────
+    // ?select=1&sale=<key>&pre=<comma ids> — used when this page is loaded
+    // inside index.html's Online Payment modal (iframe) instead of being
+    // visited directly from the side menu.
+    var _qs = new URLSearchParams(location.search);
+    var SELECT_MODE = _qs.get("select") === "1";
+    var SALE_KEY = _qs.get("sale") || "";
+    var selectedIds = new Set((_qs.get("pre") || "").split(",").filter(Boolean));
+
+    function isLocked(p) {
+      // A payment already linked to a *different* sale can't be picked here —
+      // this is what stops the same payment from being double-counted.
+      return !!(p.linkedSaleId && String(p.linkedSaleId) !== String(SALE_KEY));
+    }
+
+    if (SELECT_MODE) {
+      document.body.classList.add("select-mode");
+      var _h1 = document.querySelector(".top-bar h1");
+      if (_h1) _h1.textContent = "ငွေလွှဲ ရွေးရန်";
+      var _menuBtn = document.getElementById("menuBtn");
+      if (_menuBtn) {
+        _menuBtn.textContent = "✕";
+        _menuBtn.setAttribute("aria-label", "Close");
+        _menuBtn.onclick = cancelSelection;
+      }
+    }
 
     // ── SS ပုံများကို local မှာ မသိမ်းပဲ Cloud (Firestore) ထဲမှာသာ သိမ်း ──
     var SS_COLLECTION = "paymentScreenshots";
@@ -568,6 +596,14 @@
 
       closeForm();
       loadPayments();
+
+      // Select mode: creating/editing a payment record here should also
+      // link it to the current sale and hand control straight back to
+      // index.html, per the "save closes the window" requirement.
+      if (SELECT_MODE) {
+        selectedIds.add(paymentId);
+        finishSelection();
+      }
     }
 
     function deletePayment(index) {
@@ -575,6 +611,7 @@
         let removed = paymentsList[index];
         paymentsList.splice(index, 1);
         localStorage.setItem("paymentsList", JSON.stringify(paymentsList));
+        if (removed && SELECT_MODE) selectedIds.delete(removed.id);
         loadPayments();
         if (removed && removed.hasSS && removed.id) {
           deleteSSFromCloud(removed.id);
@@ -582,12 +619,57 @@
       });
     }
 
-    function setMethodFilter(m) {
-      methodFilter = m;
-      document.querySelectorAll(".mchip").forEach(function (c) {
-        c.classList.toggle("active", c.dataset.m === m);
+    // ── Select mode: pick existing payments to link to the current sale ──
+    function toggleSelectCard(ev, id) {
+      if (ev && ev.target && ev.target.closest && ev.target.closest(".pay-actions")) return;
+      let p = paymentsList.find(function (x) { return x.id === id; });
+      if (!p || isLocked(p)) return;
+      let card = document.querySelector('.pay-card[data-id="' + id + '"]');
+      if (selectedIds.has(id)) {
+        selectedIds.delete(id);
+        if (card) card.classList.remove("selected");
+      } else {
+        selectedIds.add(id);
+        if (card) card.classList.add("selected");
+      }
+      let chk = card && card.querySelector(".pay-check");
+      if (chk) chk.classList.toggle("checked", selectedIds.has(id));
+      updateSelectBar();
+    }
+
+    function updateSelectBar() {
+      let bar = document.getElementById("selectBar");
+      if (!bar) return;
+      let ids = Array.from(selectedIds);
+      let total = 0;
+      ids.forEach(function (id) {
+        let p = paymentsList.find(function (x) { return x.id === id; });
+        if (p) total += Number(p.amount) || 0;
       });
-      applyFilters();
+      document.getElementById("selectCount").textContent = ids.length + " ခု ရွေးထားသည်";
+      document.getElementById("selectTotal").textContent = fmtKs(total);
+      bar.style.display = "flex";
+    }
+
+    function finishSelection() {
+      // Persist which sale each selected payment now belongs to, and free
+      // up any payment that was linked to this sale but got deselected —
+      // this is what makes "already used elsewhere" locking work correctly.
+      paymentsList.forEach(function (p) {
+        if (selectedIds.has(p.id)) p.linkedSaleId = SALE_KEY;
+        else if (p.linkedSaleId === SALE_KEY) delete p.linkedSaleId;
+      });
+      localStorage.setItem("paymentsList", JSON.stringify(paymentsList));
+      let chosen = paymentsList.filter(function (p) { return selectedIds.has(p.id); });
+      try {
+        window.parent.postMessage({ source: "ssm-payments", type: "selected", payments: chosen }, "*");
+      } catch (e) {}
+    }
+
+    function cancelSelection() {
+      try {
+        window.parent.postMessage({ source: "ssm-payments", type: "cancel" }, "*");
+      } catch (e) {}
     }
 
     function loadPayments() {
@@ -604,46 +686,36 @@
 
       sorted.forEach(function (row) {
         let p = row.p, index = row.i;
+        let _locked = SELECT_MODE && isLocked(p);
+        let _selected = SELECT_MODE && selectedIds.has(p.id);
+        let _cardClass = "pay-card" + (SELECT_MODE ? " selectable" : "") + (_selected ? " selected" : "") + (_locked ? " locked" : "");
+        let _cardClick = (SELECT_MODE && !_locked) ? `onclick="toggleSelectCard(event, '${p.id}')"` : "";
         html += `
-          <div class="pay-card" data-method="${p.method || ""}">
+          <div class="${_cardClass}" data-method="${p.method || ""}" data-id="${p.id || ""}" ${_cardClick}>
             <div class="pay-top">
+              ${SELECT_MODE ? `<span class="pay-check${_selected ? " checked" : ""}"></span>` : ""}
               <div class="pay-amt-wrap">
                 <div class="pay-amt">${fmtKs(p.amount)}</div>
-                <div class="pay-when">${fmtWhen(p.createdAt)}</div>
+                <span class="tag ${methodTagClass(p.method)}">${methodLabel(p.method)}</span>
+                <div class="pay-actions">
+                  <button class="icon-btn btn-edit"   onclick="event.stopPropagation(); openForm(${index})" aria-label="Edit">✏️</button>
+                  <button class="icon-btn btn-delete" onclick="event.stopPropagation(); deletePayment(${index})" aria-label="Delete">🗑️</button>
+                </div>
               </div>
-              <span class="tag ${methodTagClass(p.method)}">${methodLabel(p.method)}</span>
+              ${(p.sender || p.transferId || p.hasSS) ? `<div class="pay-info-right">
+                ${p.sender ? `<div class="pay-mid">လွှဲသူ - <b>${p.sender}</b></div>` : ""}
+                ${p.transferId ? `<div class="pay-mid">ငွေလွှဲ ID - <b>${p.transferId}</b></div>` : ""}
+                ${p.hasSS ? `<div class="pay-mid" style="display:flex;align-items:center;justify-content:flex-end;gap:9px;">SS -
+                  <button type="button" class="ss-view-btn" onclick="event.stopPropagation(); viewCloudSS('${p.id}', this)">🖼️ ကြည့်ရန်</button></div>` : ""}
+              </div>` : ""}
             </div>
-            ${p.sender ? `<div class="pay-mid">လွှဲသူ - <b>${p.sender}</b></div>` : ""}
-            ${p.transferId ? `<div class="pay-mid">ငွေလွှဲ ID - <b>${p.transferId}</b></div>` : ""}
-            ${p.hasSS ? `<div class="pay-mid" style="display:flex;align-items:center;gap:9px;">SS -
-              <button type="button" class="ss-view-btn" onclick="viewCloudSS('${p.id}', this)">🖼️ ကြည့်ရန်</button></div>` : ""}
-            ${p.note ? `<div class="pay-note">${p.note}</div>` : ""}
-            <div class="pay-actions">
-              <button class="icon-btn btn-edit"   onclick="openForm(${index})" aria-label="Edit">✏️</button>
-              <button class="icon-btn btn-delete" onclick="deletePayment(${index})" aria-label="Delete">🗑️</button>
-            </div>
+            ${_locked ? `<div class="pay-mid lock-tag">🔒 တခြား အော်ဒါတွင် အသုံးပြုပြီးသား</div>` : ""}
           </div>`;
       });
 
       document.getElementById("paymentsListEl").innerHTML = html;
-      updateSummary();
       applyFilters();
-    }
-
-    function updateSummary() {
-      let today = new Date();
-      let todaySum = 0, allSum = 0;
-      paymentsList.forEach(function (p) {
-        let amt = Number(p.amount) || 0;
-        allSum += amt;
-        let d = new Date(p.createdAt || 0);
-        if (!isNaN(d.getTime()) && d.getFullYear() === today.getFullYear() &&
-            d.getMonth() === today.getMonth() && d.getDate() === today.getDate()) {
-          todaySum += amt;
-        }
-      });
-      document.getElementById("todayTotal").textContent = fmtKs(todaySum);
-      document.getElementById("allTotal").textContent = fmtKs(allSum);
+      if (SELECT_MODE) updateSelectBar();
     }
 
     // ── Search + method filter ──────────────────────────────────────

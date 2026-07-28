@@ -155,6 +155,63 @@
       padding-top:14px;
     }
 
+    /* ── Online Payment: selected-payments summary chip list ── */
+    .pay-summary-box{
+      margin-top:12px; padding:12px 13px; border-radius:var(--r-sm);
+      background:var(--brand-tint); border:1px solid var(--brand-line);
+    }
+    .pay-summary-total{
+      display:flex; align-items:center; justify-content:space-between;
+      font-size:13.5px; font-weight:700; color:var(--brand-ink);
+      margin:0 0 8px 0;
+    }
+    .pay-summary-chips{ display:flex; flex-wrap:wrap; gap:7px; }
+    .pay-summary-chip{
+      display:inline-flex; align-items:center; gap:5px;
+      font-size:12px; font-weight:600; color:var(--ink-2);
+      background:#fff; border:1px solid var(--line-2); border-radius:999px;
+      padding:5px 11px; white-space:nowrap;
+    }
+    .pay-summary-chip b{ color:var(--ink); }
+
+    /* ── Online Payment: full-screen modal (embeds payments.html) ── */
+    .pay-modal-overlay{
+      position:fixed; inset:0; z-index:400;
+      background:rgba(15,17,23,.4);
+      opacity:0; pointer-events:none;
+      transition:opacity .28s ease;
+      display:flex; align-items:flex-end; justify-content:center;
+    }
+    .pay-modal-overlay.show{ opacity:1; pointer-events:auto; }
+    .pay-modal-sheet{
+      width:100%; max-width:600px; height:100%;
+      background:var(--bg);
+      display:flex; flex-direction:column;
+      transform:translateY(100%);
+      transition:transform .32s cubic-bezier(.32,.72,0,1);
+      box-shadow:0 -8px 30px rgba(16,24,40,.18);
+    }
+    .pay-modal-overlay.show .pay-modal-sheet{ transform:translateY(0); }
+    .pay-modal-head{
+      flex:none; display:flex; align-items:center; gap:8px;
+      padding:13px 14px; padding-top:calc(13px + env(safe-area-inset-top, 0px));
+      background:rgba(255,255,255,.92);
+      backdrop-filter:saturate(150%) blur(10px); -webkit-backdrop-filter:saturate(150%) blur(10px);
+      border-bottom:1px solid var(--line);
+    }
+    .pay-modal-head h2{ margin:0; flex:1; font-size:16px; font-weight:700; letter-spacing:-.01em; }
+    .pay-modal-close{
+      flex:none; background:none; border:none; font-size:19px; color:var(--ink-2);
+      cursor:pointer; padding:7px 10px; border-radius:10px; line-height:1;
+    }
+    .pay-modal-close:active{ background:var(--line); }
+    .pay-modal-body{
+      flex:1; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch;
+    }
+    .pay-modal-body iframe{
+      width:100%; height:100%; border:none; display:block; background:var(--bg);
+    }
+
     /* ── Fields ── */
     .field{ margin:0 0 12px 0; }
     .field-row{ display:flex; gap:10px; }
@@ -331,8 +388,9 @@
     .cart-foot .ci{ font-size:13px; font-weight:600; color:var(--ink-2); }
     .cart-foot .ci b{ color:var(--brand-ink); }
     #grandTotal{ margin:0; font-size:18px; font-weight:800; color:var(--brand-ink); letter-spacing:-.01em; }
-    #discountShow{ margin:11px 2px 0; font-size:13.5px; font-weight:700; color:var(--red); text-align:right; }
-    #discountShow:empty{ display:none; }
+    .cart-foot-sub{ display:flex; align-items:center; justify-content:space-between; gap:12px;
+      margin-top:4px; font-size:12.5px; font-weight:600; color:var(--ink-3); }
+    .cart-foot-sub:empty, .cart-foot-sub[hidden]{ display:none; }
 
     /* discount box — subtle violet, on-brand */
     .disc-box{
@@ -735,42 +793,9 @@
         </div>
 
         <div class="order-info-toggle-row">
-          <button type="button" id="onlinePayToggleBtn" class="order-info-toggle-btn" style="display:inline-flex;" onclick="toggleOnlinePay()" aria-expanded="false">💳 Online Payment ထည့်ရန်</button>
+          <button type="button" id="onlinePayToggleBtn" class="order-info-toggle-btn" style="display:inline-flex;" onclick="openPaymentModal()" aria-haspopup="dialog">💳 Online Payment ထည့်ရန်</button>
         </div>
-        <div class="order-info-collapse" id="onlinePayCollapse">
-          <div class="order-info-collapse-inner">
-            <div class="field-row">
-              <div class="field">
-                <label class="lbl">Payment Type</label>
-                <select id="payType">
-                  <option value="">ရွေးပါ</option>
-                  <option value="KBZ Pay">KBZ Pay</option>
-                  <option value="Wave Pay">Wave Pay</option>
-                  <option value="AYA Pay">AYA Pay</option>
-                  <option value="CB Pay">CB Pay</option>
-                  <option value="Bank Transfer">Bank Transfer</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-              <div class="field">
-                <label class="lbl">ပေးငွေပမာဏ (Amount)</label>
-                <input id="payAmount" placeholder="Amount" inputmode="numeric">
-              </div>
-            </div>
-            <div class="field-row">
-              <div class="field">
-                <label class="lbl">Transaction Code</label>
-                <input id="payCode" placeholder="Transaction / Ref Code">
-              </div>
-              <div class="field">
-                <label class="lbl">ပေးချေသည့်ရက်</label>
-                <input id="payDate" type="date">
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <h3 id="discountShow"></h3>
+        <div id="paySummary" class="pay-summary-box" style="display:none;"></div>
       </section>
 
       <!-- Sale list -->
@@ -780,6 +805,18 @@
         <div class="cart-foot">
           <span class="ci">Total Items: <b id="cartCount">0</b></span>
           <h3 id="grandTotal">Total : 0</h3>
+        </div>
+        <div class="cart-foot-sub" id="deliveryFeeShow" hidden>
+          <span>ပို့ခ (Delivery Fee)</span>
+          <span id="deliveryFeeShowVal">0</span>
+        </div>
+        <div class="cart-foot-sub" id="onlinePayFeeShow" hidden>
+          <span>စရံ / ကြိုတင်ပေးငွေ (<span id="onlinePayFeeShowCount">0</span>)</span>
+          <span id="onlinePayFeeShowVal" style="color:var(--red);">-0</span>
+        </div>
+        <div class="cart-foot-sub" id="discountFeeShow" hidden>
+          <span>လျော့ပေး (Discount)</span>
+          <span id="discountFeeShowVal" style="color:var(--red);">-0</span>
         </div>
       </section>
 
@@ -804,6 +841,19 @@
       <h2 id="netTotal">Grand Total : 0</h2>
     </div>
     <button id="saveBtn" onclick="saveReceipt()">💾 Save</button>
+  </div>
+
+  <!-- Online Payment modal (embeds payments.html as the single payment UI) -->
+  <div class="pay-modal-overlay no-print" id="payModalOverlay" onclick="if(event.target===this) closePaymentModal()">
+    <div class="pay-modal-sheet" role="dialog" aria-modal="true" aria-label="Online Payment">
+      <div class="pay-modal-head">
+        <h2>💳 Online Payment</h2>
+        <button type="button" class="pay-modal-close" onclick="closePaymentModal()" aria-label="Close">✕</button>
+      </div>
+      <div class="pay-modal-body">
+        <iframe id="payModalFrame" title="Online Payment" src="about:blank"></iframe>
+      </div>
+    </div>
   </div>
 
   <!-- Receipt Preview (Share image အတွက်ပဲ၊ screen မှာ မပြ) -->
@@ -831,6 +881,18 @@
 
 
     <script>
+
+    // Safety net: if icons.js failed to load or hasn't defined ssmIcon yet,
+    // fall back to a plain-text glyph instead of throwing a ReferenceError.
+    // (An uncaught error here used to silently abort addItem() right after
+    // the item was pushed but before the cart row/UI was updated — so the
+    // button appeared to do nothing.)
+    if (typeof window.ssmIcon !== "function") {
+      window.ssmIcon = function (name) {
+        var map = { edit: "✏️", trash: "🗑️", add: "＋" };
+        return map[name] || "";
+      };
+    }
 
     let grandTotal = 0;
     let items      = [];
@@ -937,14 +999,97 @@
     })();
 
     // ── Online Payment: collapsible fields toggle ──────────────────
-    function toggleOnlinePay() {
-      var btn = document.getElementById("onlinePayToggleBtn");
-      var collapse = document.getElementById("onlinePayCollapse");
-      if (!btn || !collapse) return;
-      var expanded = collapse.classList.toggle("expanded");
-      btn.textContent = expanded ? "− Online Payment ပိတ်ရန်" : "💳 Online Payment ထည့်ရန်";
-      btn.setAttribute("aria-expanded", expanded ? "true" : "false");
+    // ── Online Payment: full-screen modal embedding payments.html ──
+    // selectedPayments holds the full payment records (id, amount, method, ...)
+    // that are linked to the sale currently being drafted/edited.
+    var selectedPayments = [];
+
+    // A stable key identifying "this sale" for the duration of the draft,
+    // so payments.html can tag which payment records belong to it and stop
+    // the same payment from being linked to two different sales at once.
+    // When editing an existing receipt this equals its real orderNo; for a
+    // brand-new sale it equals the order number that WILL be assigned on
+    // save (ssmOrderNo(orderNo) doesn't change until saveReceipt() runs),
+    // so the key stays consistent across repeated modal opens pre-save.
+    function getSaleKey() {
+      return window.editOrderNo || ssmOrderNo(orderNo);
     }
+
+    function fmtPayKs(n) {
+      n = Number(n) || 0;
+      return n.toLocaleString("en-US") + " Ks";
+    }
+    function payMethodLabel(m) {
+      return m === "Bank" ? "ဘဏ်လွှဲ" : (m || "အခြား");
+    }
+
+    function renderPaySummary() {
+      var box = document.getElementById("paySummary");
+      var btn = document.getElementById("onlinePayToggleBtn");
+      var footShow = document.getElementById("onlinePayFeeShow");
+      if (!box) return;
+      if (!selectedPayments.length) {
+        box.style.display = "none";
+        box.innerHTML = "";
+        if (btn) btn.textContent = "💳 Online Payment ထည့်ရန်";
+        if (footShow) footShow.hidden = true;
+        return;
+      }
+      var total = selectedPayments.reduce(function (s, p) { return s + (Number(p.amount) || 0); }, 0);
+      var chips = selectedPayments.map(function (p) {
+        return '<span class="pay-summary-chip">' + payMethodLabel(p.method) + ' • <b>' + fmtPayKs(p.amount) + '</b></span>';
+      }).join("");
+      box.innerHTML =
+        '<div class="pay-summary-total"><span>💳 စရံ / ကြိုတင်ပေးငွေ (Deposit) (' + selectedPayments.length + ')</span><span>' + fmtPayKs(total) + '</span></div>' +
+        '<div class="pay-summary-chips">' + chips + '</div>';
+      box.style.display = "block";
+      if (btn) btn.textContent = "✏️ Online Payment ပြင်ရန် (" + selectedPayments.length + ")";
+      if (footShow) {
+        document.getElementById("onlinePayFeeShowCount").textContent = selectedPayments.length;
+        document.getElementById("onlinePayFeeShowVal").textContent = "-" + total;
+        footShow.hidden = false;
+      }
+    }
+
+    function openPaymentModal() {
+      var overlay = document.getElementById("payModalOverlay");
+      var frame = document.getElementById("payModalFrame");
+      if (!overlay || !frame) return;
+      var preIds = selectedPayments.map(function (p) { return p.id; }).join(",");
+      // "&t=" busts the iframe cache so payments.html always re-reads
+      // localStorage fresh (other pages may have added/changed payments).
+      frame.src = "payments.html?select=1&sale=" + encodeURIComponent(getSaleKey()) +
+        "&pre=" + encodeURIComponent(preIds) + "&t=" + Date.now();
+      overlay.style.display = "flex";
+      requestAnimationFrame(function () { overlay.classList.add("show"); });
+      document.body.style.overflow = "hidden";
+    }
+
+    function closePaymentModal() {
+      var overlay = document.getElementById("payModalOverlay");
+      var frame = document.getElementById("payModalFrame");
+      if (!overlay) return;
+      overlay.classList.remove("show");
+      document.body.style.overflow = "";
+      setTimeout(function () {
+        overlay.style.display = "none";
+        if (frame) frame.src = "about:blank";
+      }, 320); // matches .pay-modal-sheet transition duration
+    }
+
+    // Messages from the embedded payments.html (select mode)
+    window.addEventListener("message", function (ev) {
+      var d = ev && ev.data;
+      if (!d || d.source !== "ssm-payments") return;
+      if (d.type === "selected") {
+        selectedPayments = Array.isArray(d.payments) ? d.payments : [];
+        renderPaySummary();
+        calculateNet();
+        closePaymentModal();
+      } else if (d.type === "cancel") {
+        closePaymentModal();
+      }
+    });
 
     // ── Delivery Service: recipient toggle button ─────────────────
     function toggleRecipientBtn() {
@@ -1214,15 +1359,19 @@
       var _sub = (saleType === "weight")
         ? weightText
         : ((isGift ? "လက်ဆောင် | " : "") + qty + " x " + price);
-      document.getElementById("saleTable").innerHTML += `
-        <div class="rcart-item" data-id="${item.id}" data-total="${total}">
-          <div class="rcart-main">
-            <div class="item-name">${product}${giftTag}${repTag}</div>
-            <div class="item-sub"><span>${_sub}</span><span>${total}</span></div>
-            ${remark ? `<div class="item-remark">→ ${remark}</div>` : ""}
-          </div>
-          <span class="rcart-act no-print"><button class="cart-edit" onclick="editRow(this)" aria-label="Edit">${ssmIcon("edit",{size:15})}</button><button class="cart-del" onclick="deleteRow(this)" aria-label="Delete">${ssmIcon("trash",{size:15})}</button></span>
-        </div>`;
+      try {
+        document.getElementById("saleTable").innerHTML += `
+          <div class="rcart-item" data-id="${item.id}" data-total="${total}">
+            <div class="rcart-main">
+              <div class="item-name">${product}${giftTag}${repTag}</div>
+              <div class="item-sub"><span>${_sub}</span><span>${total}</span></div>
+              ${remark ? `<div class="item-remark">→ ${remark}</div>` : ""}
+            </div>
+            <span class="rcart-act no-print"><button class="cart-edit" onclick="editRow(this)" aria-label="Edit">${ssmIcon("edit",{size:15})}</button><button class="cart-del" onclick="deleteRow(this)" aria-label="Delete">${ssmIcon("trash",{size:15})}</button></span>
+          </div>`;
+      } catch (err) {
+        console.error("addItem: cart row render failed", err);
+      }
       updateCartCount();
 
       document.getElementById("grandTotal").innerHTML = "Total : " + grandTotal;
@@ -1306,15 +1455,29 @@
     function calculateNet() {
       let delivery = Number(document.getElementById("delivery").value);
       let discountAmount = Number(document.getElementById("discountValue").value) || 0;
+      let onlinePayTotal = selectedPayments.reduce(function (s, p) { return s + (Number(p.amount) || 0); }, 0);
 
-      let discountShow = document.getElementById("discountShow");
-      if (discountAmount > 0) {
-        discountShow.innerText = "Discount : -" + discountAmount;
-      } else {
-        discountShow.innerText = "";
+      let discountShow = document.getElementById("discountFeeShow");
+      if (discountShow) {
+        if (discountAmount > 0) {
+          document.getElementById("discountFeeShowVal").textContent = "-" + discountAmount;
+          discountShow.hidden = false;
+        } else {
+          discountShow.hidden = true;
+        }
       }
 
-      let net = grandTotal - discountAmount + delivery;
+      let deliveryShow = document.getElementById("deliveryFeeShow");
+      if (deliveryShow) {
+        if (delivery > 0) {
+          document.getElementById("deliveryFeeShowVal").textContent = delivery;
+          deliveryShow.hidden = false;
+        } else {
+          deliveryShow.hidden = true;
+        }
+      }
+
+      let net = grandTotal + delivery - onlinePayTotal - discountAmount;
       document.getElementById("netTotal").innerHTML = "Grand Total : " + net;
     }
 
@@ -1403,14 +1566,15 @@
         deliveryFeeReal: "",
         charge:          "",
         deliveryPhoto:   "",
-        deposit:         Number(document.getElementById("payAmount").value) || 0,
+        deposit:         selectedPayments.reduce(function (s, p) { return s + (Number(p.amount) || 0); }, 0),
         depositBase:     0,
-        payStatus:       (document.getElementById("payAmount").value ? "Online" : "Cash"),
-        payType:         document.getElementById("payType").value,
-        payCode:         document.getElementById("payCode").value,
+        payStatus:       (selectedPayments.length ? "Online" : "Cash"),
+        payType:         selectedPayments.map(function (p) { return payMethodLabel(p.method); }).join(", "),
+        payCode:         selectedPayments.map(function (p) { return p.transferId; }).filter(Boolean).join(", "),
         paySS:           "",
-        payAmount:       document.getElementById("payAmount").value,
-        payDate:         document.getElementById("payDate").value,
+        payAmount:       selectedPayments.reduce(function (s, p) { return s + (Number(p.amount) || 0); }, 0),
+        payDate:         (selectedPayments.length ? new Date(Math.max.apply(null, selectedPayments.map(function (p) { return p.createdAt || 0; }))).toISOString().slice(0, 10) : ""),
+        linkedPayments:  selectedPayments.map(function (p) { return p.id; }),
         note:            document.getElementById("note").value,
         netTotal:        document.getElementById("netTotal").innerText,
         printed:         false,
@@ -1579,15 +1743,18 @@
       document.getElementById("deliveryService").value = receipt.deliveryService || "";
       document.getElementById("note").value            = receipt.note            || "";
       document.getElementById("discountValue").value   = receipt.discountAmount  || receipt.discountValue || "";
-      document.getElementById("payType").value         = receipt.payType         || "";
-      document.getElementById("payAmount").value       = receipt.payAmount       || "";
-      document.getElementById("payCode").value         = receipt.payCode         || "";
-      document.getElementById("payDate").value         = receipt.payDate         || "";
-      if (receipt.payType || receipt.payAmount || receipt.payCode) {
-        var _pBtn = document.getElementById("onlinePayToggleBtn");
-        var _pCol = document.getElementById("onlinePayCollapse");
-        if (_pCol && !_pCol.classList.contains("expanded")) { _pCol.classList.add("expanded"); if (_pBtn) { _pBtn.textContent = "− Online Payment ပိတ်ရန်"; _pBtn.setAttribute("aria-expanded", "true"); } }
+
+      // Restore linked Online Payment records (matched against payments.html's
+      // own store) so the summary + modal pre-selection reflect this receipt.
+      selectedPayments = [];
+      if (receipt.linkedPayments && receipt.linkedPayments.length) {
+        var _allPay = JSON.parse(localStorage.getItem("paymentsList")) || [];
+        receipt.linkedPayments.forEach(function (pid) {
+          var found = _allPay.find(function (p) { return p.id === pid; });
+          if (found) selectedPayments.push(found);
+        });
       }
+      renderPaySummary();
 
       receipt.items.forEach(function (item) {
         if (!item.id) item.id = Date.now() + Math.random();
