@@ -133,7 +133,8 @@
       flex:none; white-space:nowrap;
       align-items:center; gap:6px;
       font-size:12.5px; font-weight:600;
-      padding:8px 13px;
+      line-height:1.15;
+      padding:7px 13px;
       border-radius:999px;
       background:var(--brand); color:#fff; border:none;
       cursor:pointer;
@@ -151,9 +152,7 @@
       overflow:hidden; min-height:0; min-width:0;
       overflow-wrap:break-word; word-break:break-word;
     }
-    .order-info-toggle-row + .order-info-collapse .order-info-collapse-inner{
-      padding-top:14px;
-    }
+
 
     /* ── Online Payment: selected-payments summary chip list ── */
     .pay-summary-box{
@@ -217,6 +216,8 @@
     .field-row{ display:flex; gap:10px; }
     .field-row .field{ flex:1; min-width:0; }
     .field:last-child{ margin-bottom:0; }
+    .field:has(+ #receiverSection){ margin-bottom:0; }
+    #receiverSection{ margin-top:12px; }
     .lbl{
       display:block; font-size:12.5px; font-weight:600; color:var(--ink-2);
       margin:0 0 6px 2px;
@@ -776,8 +777,6 @@
 
       <!-- Discount & payment -->
       <section class="card">
-        <p class="eyebrow"><span class="dot"></span>လျှော့ဈေး & ပေးချေမှု</p>
-
         <div class="field-row">
           <div class="field">
             <label class="lbl">လျော့ပေး (Discount)</label>
@@ -970,14 +969,17 @@
       var toggleBtn = document.getElementById("orderInfoToggleBtn");
       var collapse = document.getElementById("orderInfoCollapse");
       if (!toggleBtn || !collapse) return;
+      var inner = collapse.querySelector(".order-info-collapse-inner");
       if (mode === "shop") {
         toggleBtn.style.display = "inline-flex";
         collapse.classList.remove("expanded");        // collapsed by default in Shop mode
         toggleBtn.textContent = "+ Order Information";
         toggleBtn.setAttribute("aria-expanded", "false");
+        if (inner) inner.style.paddingTop = "14px";     // space below the visible toggle button
       } else {
         toggleBtn.style.display = "none";
         collapse.classList.add("expanded");            // always visible in Online mode
+        if (inner) inner.style.paddingTop = "0";        // no toggle button shown, so no gap needed
       }
       syncOrderInfoOverflow(collapse, collapse.classList.contains("expanded"));
     }

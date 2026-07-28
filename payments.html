@@ -338,10 +338,6 @@
           <label class="lbl">လွှဲသူ နာမည် / ဖုန်း <span style="font-weight:500;color:var(--ink-3);">(optional)</span></label>
           <input id="paySender" placeholder="နာမည် (သို့) ဖုန်းနံပါတ်">
         </div>
-        <div class="field">
-          <label class="lbl">မှတ်ချက် <span style="font-weight:500;color:var(--ink-3);">(optional)</span></label>
-          <textarea id="payNote" placeholder="ဥပမာ - အော်ဒါ နံပါတ်, အကြောင်းအရာ"></textarea>
-        </div>
         <button class="btn-save" id="saveBtn" onclick="savePayment()">💾 Save</button>
       </section>
     </div>
@@ -482,7 +478,6 @@
         } else {
           clearSSImage();
         }
-        document.getElementById("payNote").value = p.note || "";
       } else {
         editingIndex = null;
         document.getElementById("formTitle").innerText = "ငွေလွှဲ အသစ် မှတ်မည်";
@@ -491,7 +486,6 @@
         document.getElementById("paySender").value = "";
         document.getElementById("payTransferId").value = "";
         clearSSImage();
-        document.getElementById("payNote").value = "";
       }
     }
 
@@ -564,6 +558,11 @@
       let amount = parseFloat(document.getElementById("payAmount").value);
       if (!amount || amount <= 0) { alert("ပမာဏ မှန်ကန်စွာ ထည့်ပါ"); return; }
 
+      let transferId = document.getElementById("payTransferId").value.trim();
+      if (!transferId) { alert("ငွေလွှဲ ID ထည့်ပါ"); return; }
+
+      if (!currentSSDataUrl) { alert("ငွေလွှဲ SS ဓါတ်ပုံ ရွေးပါ"); return; }
+
       let existing = editingIndex !== null ? paymentsList[editingIndex] : null;
       let paymentId = (existing && existing.id) || genId();
 
@@ -572,9 +571,8 @@
         amount: amount,
         method: document.getElementById("payMethod").value,
         sender: document.getElementById("paySender").value.trim(),
-        transferId: document.getElementById("payTransferId").value.trim(),
+        transferId: transferId,
         hasSS: !!currentSSDataUrl,
-        note: document.getElementById("payNote").value.trim(),
         createdAt: (existing ? existing.createdAt : Date.now()) || Date.now()
       };
 

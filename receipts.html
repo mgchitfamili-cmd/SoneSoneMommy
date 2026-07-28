@@ -252,6 +252,58 @@
     #ssModalImg{ max-width:100%; max-height:80vh; object-fit:contain; border-radius:12px; }
     #ssModal button{ margin-top:20px; padding:12px 24px; border-radius:var(--r-sm); border:none;
       background:#fff; color:var(--ink); font-size:15px; font-weight:600; font-family:inherit; cursor:pointer; }
+
+    /* ── Online Payment: summary chips + full-screen modal (embeds payments.html) ── */
+    .btn-onlinepay{ background:var(--brand); }
+    .pay-summary-box{
+      margin-top:11px; padding:12px 13px; border-radius:var(--r-sm);
+      background:var(--brand-tint); border:1px solid var(--brand-line);
+    }
+    .pay-summary-total{
+      display:flex; align-items:center; justify-content:space-between;
+      font-size:13.5px; font-weight:700; color:var(--brand-ink);
+      margin:0 0 8px 0;
+    }
+    .pay-summary-chips{ display:flex; flex-wrap:wrap; gap:7px; }
+    .pay-summary-chip{
+      display:inline-flex; align-items:center; gap:5px;
+      font-size:12px; font-weight:600; color:var(--ink-2);
+      background:#fff; border:1px solid var(--line-2); border-radius:999px;
+      padding:5px 11px; white-space:nowrap;
+    }
+    .pay-summary-chip b{ color:var(--ink); }
+    .pay-modal-overlay{
+      position:fixed; inset:0; z-index:9997;
+      background:rgba(15,17,23,.4);
+      opacity:0; pointer-events:none;
+      transition:opacity .28s ease;
+      display:flex; align-items:flex-end; justify-content:center;
+    }
+    .pay-modal-overlay.show{ opacity:1; pointer-events:auto; }
+    .pay-modal-sheet{
+      width:100%; max-width:600px; height:100%;
+      background:var(--bg);
+      display:flex; flex-direction:column;
+      transform:translateY(100%);
+      transition:transform .32s cubic-bezier(.32,.72,0,1);
+      box-shadow:0 -8px 30px rgba(16,24,40,.18);
+    }
+    .pay-modal-overlay.show .pay-modal-sheet{ transform:translateY(0); }
+    .pay-modal-head{
+      flex:none; display:flex; align-items:center; gap:8px;
+      padding:13px 14px; padding-top:calc(13px + env(safe-area-inset-top, 0px));
+      background:rgba(255,255,255,.92);
+      backdrop-filter:saturate(150%) blur(10px); -webkit-backdrop-filter:saturate(150%) blur(10px);
+      border-bottom:1px solid var(--line);
+    }
+    .pay-modal-head h2{ margin:0; flex:1; font-size:16px; font-weight:700; letter-spacing:-.01em; }
+    .pay-modal-close{
+      flex:none; background:none; border:none; font-size:19px; color:var(--ink-2);
+      cursor:pointer; padding:7px 10px; border-radius:10px; line-height:1;
+    }
+    .pay-modal-close:active{ background:var(--line); }
+    .pay-modal-body{ flex:1; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+    .pay-modal-body iframe{ width:100%; height:100%; border:none; display:block; background:var(--bg); }
   </style>
 </head>
 
@@ -349,6 +401,19 @@
     <button onclick="closeSS()">✖ Close</button>
   </div>
 
+  <!-- Online Payment modal (embeds payments.html, same as index.html) -->
+  <div class="pay-modal-overlay" id="onlinePayModalOverlay" onclick="if(event.target===this) closeOnlinePaymentModal()">
+    <div class="pay-modal-sheet" role="dialog" aria-modal="true" aria-label="Online Payment">
+      <div class="pay-modal-head">
+        <h2>💳 Online Payment</h2>
+        <button type="button" class="pay-modal-close" onclick="closeOnlinePaymentModal()" aria-label="Close">✕</button>
+      </div>
+      <div class="pay-modal-body">
+        <iframe id="onlinePayModalFrame" title="Online Payment" src="about:blank"></iframe>
+      </div>
+    </div>
+  </div>
+
   <!-- Hidden receipt preview for print/share -->
   <div id="receiptPreviewHidden" class="receipt-preview-hidden"></div>
 
@@ -381,6 +446,8 @@
         html = `<p style="color:#9ca3af; text-align:center; margin-top:40px;">Receipt မရှိသေးပါ။</p>`;
       }
 
+      var _allPayRecords = JSON.parse(localStorage.getItem("paymentsList")) || [];
+
       salesHistory
         .map(function (sale, index) { return { sale: sale, index: index }; })
         .reverse() // အသစ်ဆုံး အပေါ်ဆုံး
@@ -398,6 +465,22 @@
           });
         }
 
+        // Online Payment summary (payments.html records linked to this receipt)
+        var _linkedPays = (sale.linkedPayments || [])
+          .map(function (pid) { return _allPayRecords.find(function (p) { return p.id === pid; }); })
+          .filter(Boolean);
+        var paySummaryHtml = "";
+        if (_linkedPays.length) {
+          var _payTotal = _linkedPays.reduce(function (s, p) { return s + (Number(p.amount) || 0); }, 0);
+          var _chips = _linkedPays.map(function (p) {
+            var _mLabel = p.method === "Bank" ? "ဘဏ်လွှဲ" : (p.method || "အခြား");
+            return '<span class="pay-summary-chip">' + _mLabel + ' • <b>' + (Number(p.amount) || 0).toLocaleString("en-US") + ' Ks</b></span>';
+          }).join("");
+          paySummaryHtml =
+            '<div class="pay-summary-total"><span>💳 Online Payment (' + _linkedPays.length + ')</span><span>' + _payTotal.toLocaleString("en-US") + ' Ks</span></div>' +
+            '<div class="pay-summary-chips">' + _chips + '</div>';
+        }
+
         // Print badge
         // Shop mode + Delivery Service မရွေးထား (ဆိုင်ရောက်ရောင်း/no-delivery) ဆိုရင်
         // "🖨️ မထုတ်ရသေး" ဟု မပြပါ — Online mode နှင့် Delivery ရွေးထားသော Shop voucher များကို မထိခိုက်စေပါ။
@@ -405,6 +488,7 @@
         let printBadge = sale.printed
           ? `<span class="badge badge-printed">🖨️ Print ပြီး</span>`
           : (_noDeliveryShopVoucher ? "" : `<span class="badge badge-notprinted">🖨️ မထုတ်ရသေး</span>`);
+
 
         // Payment badge
         let payBadge = "";
@@ -485,7 +569,10 @@
 
               ${payInfo}
 
+              <div id="paySummary-${index}" class="pay-summary-box" style="${_linkedPays.length ? '' : 'display:none;'}">${paySummaryHtml}</div>
+
               <div class="actions">
+                <button class="btn btn-onlinepay" onclick="openOnlinePaymentModal(${index})">💳 Online Payment</button>
                 <button class="btn btn-print"   onclick="printReceipt(${index})">${ssmIcon("print", {size:16})} Print</button>
                 <button class="btn btn-share"   onclick="shareReceipt(${index})">${ssmIcon("share", {size:16})} Share</button>
                 <button class="btn btn-edit"    onclick="editReceipt(${index})">${ssmIcon("edit", {size:16})} Edit</button>
@@ -805,6 +892,54 @@
         });
       });
     }
+
+    // ── Online Payment: modal embedding payments.html (same UI as index.html) ──
+    var _onlinePayIndex = null;
+
+    function openOnlinePaymentModal(index) {
+      _onlinePayIndex = index;
+      var sale = salesHistory[index];
+      if (!sale) return;
+      var overlay = document.getElementById("onlinePayModalOverlay");
+      var frame = document.getElementById("onlinePayModalFrame");
+      if (!overlay || !frame) return;
+      var preIds = (sale.linkedPayments || []).join(",");
+      // "&t=" busts the iframe cache so payments.html always re-reads localStorage fresh.
+      frame.src = "payments.html?select=1&sale=" + encodeURIComponent(sale.orderNo || "") +
+        "&pre=" + encodeURIComponent(preIds) + "&t=" + Date.now();
+      overlay.style.display = "flex";
+      requestAnimationFrame(function () { overlay.classList.add("show"); });
+      document.body.style.overflow = "hidden";
+    }
+
+    function closeOnlinePaymentModal() {
+      var overlay = document.getElementById("onlinePayModalOverlay");
+      var frame = document.getElementById("onlinePayModalFrame");
+      if (!overlay) return;
+      overlay.classList.remove("show");
+      document.body.style.overflow = "";
+      setTimeout(function () {
+        overlay.style.display = "none";
+        if (frame) frame.src = "about:blank";
+      }, 320); // matches .pay-modal-sheet transition duration
+    }
+
+    // Messages from the embedded payments.html (select mode)
+    window.addEventListener("message", function (ev) {
+      var d = ev && ev.data;
+      if (!d || d.source !== "ssm-payments") return;
+      if (d.type === "selected") {
+        if (_onlinePayIndex !== null && salesHistory[_onlinePayIndex]) {
+          var chosen = Array.isArray(d.payments) ? d.payments : [];
+          salesHistory[_onlinePayIndex].linkedPayments = chosen.map(function (p) { return p.id; });
+          localStorage.setItem("salesHistory", JSON.stringify(salesHistory));
+        }
+        closeOnlinePaymentModal();
+        renderHistory();
+      } else if (d.type === "cancel") {
+        closeOnlinePaymentModal();
+      }
+    });
 
     // ── Init ──────────────────────────────────────────────────────
     renderHistory();
